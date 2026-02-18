@@ -8,12 +8,14 @@ interface QuizState {
   score: number;
   mbReward: number;
   phoneNumber: string | null;
+  referralCode: string | null;
 }
 
 interface QuizContextType extends QuizState {
   isHydrated: boolean;
   submitAnswers: (answers: { [key:number]: string }) => void;
   setPhoneNumber: (phone: string) => void;
+  setReferralCode: (code: string) => void;
   resetQuiz: () => void;
 }
 
@@ -24,6 +26,7 @@ const initialState: QuizState = {
   score: 0,
   mbReward: 0,
   phoneNumber: null,
+  referralCode: null,
 };
 
 export function QuizProvider({ children }: { children: ReactNode }) {
@@ -77,9 +80,19 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, phoneNumber: phone }));
   };
 
+  const setReferralCode = (code: string) => {
+    setState(prev => ({ ...prev, referralCode: code }));
+  }
+
   const resetQuiz = () => {
     setState(initialState);
     try {
+      // Also remove the referral tracking keys from local storage
+      Object.keys(window.localStorage).forEach(key => {
+        if (key.startsWith('referred_by_')) {
+          window.localStorage.removeItem(key);
+        }
+      });
       window.localStorage.removeItem('quizState');
     } catch (error) {
       console.error('Failed to clear quiz state from localStorage', error);
@@ -91,6 +104,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     isHydrated,
     submitAnswers,
     setPhoneNumber,
+    setReferralCode,
     resetQuiz,
   }), [state, isHydrated]);
 

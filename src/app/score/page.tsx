@@ -30,13 +30,15 @@ const simpleHash = (str: string) => {
 
 function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   const { toast } = useToast();
-  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const { referralCode, setReferralCode } = useQuiz();
   const db = useFirestore();
 
   useEffect(() => {
-    // Generate referral code only on the client to prevent hydration mismatch
-    setReferralCode(simpleHash(Date.now().toString()));
-  }, []);
+    // Generate referral code only if it doesn't exist and save it to the context
+    if (!referralCode) {
+      setReferralCode(simpleHash(Date.now().toString()));
+    }
+  }, [referralCode, setReferralCode]);
 
   const referralLink = useMemo(() => {
     if (typeof window !== 'undefined' && referralCode) {
@@ -172,19 +174,68 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
 
 export default function ScorePage() {
   const router = useRouter();
-  const { score, mbReward, resetQuiz, answers } = useQuiz();
+  const { score, mbReward, resetQuiz, answers, isHydrated } = useQuiz();
   const [referralsComplete, setReferralsComplete] = useState(false);
 
   useEffect(() => {
-    // If user lands here without answering, redirect to home
-    if (Object.keys(answers).length === 0) {
+    if (isHydrated && Object.keys(answers).length === 0) {
       router.replace('/');
     }
-  }, [answers, router]);
+  }, [answers, isHydrated, router]);
   
   const handleReset = () => {
     resetQuiz();
     router.push('/');
+  }
+
+  if (!isHydrated || Object.keys(answers).length === 0) {
+      return (
+        <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
+            <Card className="w-full max-w-md text-center">
+                <CardHeader className="items-center">
+                    <div className="p-4 bg-accent/20 rounded-full mb-4">
+                        <Skeleton className="w-12 h-12" />
+                    </div>
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-5 w-64 mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="p-6 bg-secondary rounded-lg">
+                        <Skeleton className="h-4 w-24 mx-auto" />
+                        <Skeleton className="h-16 w-32 mx-auto mt-2" />
+                    </div>
+                    <div className="flex items-center justify-center">
+                       <Skeleton className="h-8 w-64" />
+                    </div>
+                     <div className="w-full space-y-4 pt-6 mt-6 text-left border-t-2 border-dashed border-primary/20">
+                        <CardHeader className="p-0">
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-full mt-2" />
+                        </CardHeader>
+                        <CardContent className="p-0 space-y-4">
+                            <Skeleton className="h-3 w-full" />
+                            <Skeleton className="h-4 w-48 mx-auto" />
+                            <div className="space-y-2 pt-4">
+                                <Skeleton className="h-4 w-40" />
+                                <div className="flex gap-2">
+                                    <Skeleton className="h-10 flex-grow" />
+                                    <Skeleton className="h-10 w-10" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3 pt-2">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </CardContent>
+                    </div>
+                </CardContent>
+                 <CardFooter className="flex flex-col sm:flex-row gap-4 pt-6">
+                    <Skeleton className="h-10 w-full" />
+                </CardFooter>
+            </Card>
+        </main>
+      );
   }
 
   return (
