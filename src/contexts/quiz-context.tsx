@@ -89,7 +89,11 @@ export function QuizProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const item = window.localStorage.getItem('quizState');
-      let loadedState = item ? JSON.parse(item) : initialState;
+      let loadedState: QuizState = item ? JSON.parse(item) : initialState;
+      
+      // Ensure all keys from initialState are present in the loaded state.
+      // This prevents errors when new state properties are added.
+      loadedState = { ...initialState, ...loadedState };
       
       if (loadedState.attempts >= TOTAL_ATTEMPTS) {
         // If attempts are used up, ensure no questions are shown.
@@ -125,7 +129,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
         correctAnswers++;
       }
     });
-    const scorePercentage = Math.round((correctAnswers / state.currentQuestions.length) * 100);
+    const scorePercentage = state.currentQuestions.length > 0 ? Math.round((correctAnswers / state.currentQuestions.length) * 100) : 0;
     const reward = scorePercentage * 10; // e.g., 80% score -> 800 MB
 
     setState(prev => ({
