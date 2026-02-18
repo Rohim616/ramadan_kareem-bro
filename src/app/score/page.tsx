@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuiz } from '@/contexts/quiz-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter, RefreshCw } from 'lucide-react';
+import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter, Users } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -26,7 +26,6 @@ const simpleHash = (str: string) => {
 
 function ReferralSection({ onComplete }: { onComplete: () => void }) {
   const [shares, setShares] = useState(0);
-  const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
 
   const referralCode = useMemo(() => simpleHash(Date.now().toString()), []);
@@ -39,43 +38,24 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
 
   const progress = (shares / REFERRAL_GOAL) * 100;
   
-  const handleCheckReferrals = () => {
-    setIsChecking(true);
+  const handleSimulateReferral = () => {
+    if (shares >= REFERRAL_GOAL) return;
+
+    const newShares = shares + 1;
+    setShares(newShares);
+    
     toast({
-      title: "Checking for referrals...",
-      description: "This is a simulated check.",
+        title: "Referral Simulated!",
+        description: `You now have ${newShares} referral(s).`,
     });
 
-    setTimeout(() => {
-      const oldShares = shares;
-      let newShares = shares;
-
-      // Simulate a new referral with a 40% chance
-      if (Math.random() < 0.4 && shares < REFERRAL_GOAL) {
-        newShares++;
-      }
-      
-      setShares(newShares);
-      setIsChecking(false);
-
-      if (newShares >= REFERRAL_GOAL) {
+    if (newShares >= REFERRAL_GOAL) {
         toast({
-          title: "Congratulations!",
-          description: `You've reached ${REFERRAL_GOAL} referrals and unlocked your reward.`,
+            title: "Goal Reached!",
+            description: "You've unlocked the continue button.",
         });
-        setTimeout(() => onComplete(), 500);
-      } else if (newShares > oldShares) {
-         toast({
-          title: "New Referral!",
-          description: `Someone used your link! You now have ${newShares} referral(s).`,
-        });
-      } else {
-        toast({
-            title: "No new referrals yet.",
-            description: "Keep sharing your link to get more!",
-        });
-      }
-    }, 1500); // Simulate network delay
+        onComplete();
+    }
   };
 
   const copyToClipboard = () => {
@@ -105,11 +85,11 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
   );
 
   return (
-    <div className="w-full space-y-4 pt-4 text-left">
+    <div className="w-full space-y-4 pt-6 mt-6 text-left border-t-2 border-dashed border-primary/20">
       <CardHeader className="p-0">
-        <CardTitle className="text-xl font-bold">Share to Continue</CardTitle>
+        <CardTitle className="text-xl font-bold">Referral System (Simulation)</CardTitle>
         <CardDescription>
-          Share with {REFERRAL_GOAL} friends to unlock your reward. Click "Check Progress" to simulate receiving referrals.
+          This is a **simulation** because live database creation is temporarily down. Use the button below to simulate receiving a referral. You need {REFERRAL_GOAL} referrals to continue.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 space-y-4">
@@ -119,8 +99,14 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
             {shares} of {REFERRAL_GOAL} referrals complete
           </p>
         </div>
-        <div className="space-y-2">
-            <p className="text-sm font-medium">Your referral link</p>
+
+        <Button variant="secondary" onClick={handleSimulateReferral} disabled={shares >= REFERRAL_GOAL} className="w-full">
+            <Users className="mr-2 h-4 w-4" />
+            Simulate a New Referral
+        </Button>
+        
+        <div className="space-y-2 pt-4">
+            <p className="text-sm font-medium">Your Simulated Referral Link</p>
             <div className="flex gap-2">
                 <Input value={referralLink} readOnly className="text-muted-foreground" />
                 <Button variant="outline" size="icon" onClick={copyToClipboard}>
@@ -128,20 +114,15 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
                 </Button>
             </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 pt-2">
+        <div className="grid grid-cols-3 gap-3 pt-2">
           <Button onClick={() => openShareDialog(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`)}>
-            <Facebook className="mr-2" /> Facebook
+            <Facebook className="mr-2" />
           </Button>
           <Button onClick={() => openShareDialog(`https://twitter.com/intent/tweet?text=Check%20this%20out!&url=${encodeURIComponent(referralLink)}`)}>
-            <Twitter className="mr-2" /> Twitter
+            <Twitter className="mr-2" />
           </Button>
            <Button onClick={() => openShareDialog(`https://api.whatsapp.com/send?text=Check%20this%20out!%20${encodeURIComponent(referralLink)}`)} className="bg-[#25D366] hover:bg-[#25D366]/90 text-white">
             <WhatsAppIcon />
-            WhatsApp
-          </Button>
-          <Button variant="secondary" onClick={handleCheckReferrals} disabled={isChecking}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isChecking ? 'animate-spin' : ''}`} />
-            {isChecking ? "Checking..." : "Check Progress"}
           </Button>
         </div>
       </CardContent>
@@ -192,7 +173,7 @@ export default function ScorePage() {
           </div>
           {!referralsComplete && <ReferralSection onComplete={() => setReferralsComplete(true)} />}
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row gap-4">
+        <CardFooter className="flex flex-col sm:flex-row gap-4 pt-6">
           <Button variant="outline" onClick={handleReset} className="w-full">
             <RotateCcw className="mr-2 h-4 w-4" />
             Try Again
