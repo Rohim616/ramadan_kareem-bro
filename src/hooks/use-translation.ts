@@ -13,11 +13,13 @@ export const useTranslation = () => {
   const { language } = useQuiz();
 
   const t = useCallback((key: TranslationKey, replacements?: Record<string, string | number>) => {
-    let translation = translations[language][key as TranslationKey] || translations['en'][key as TranslationKey];
+    // Default to 'bn' if the language is not available to prevent crashes.
+    const langBundle = translations[language] || translations.bn;
+    let translation = langBundle[key as TranslationKey] || translations.en[key as TranslationKey];
 
-    if (replacements) {
-        Object.entries(replacements).forEach(([key, value]) => {
-            translation = translation.replace(`{${key}}`, String(value));
+    if (translation && replacements) {
+        Object.entries(replacements).forEach(([replaceKey, value]) => {
+            translation = translation!.replace(`{${replaceKey}}`, String(value));
         });
     }
 
