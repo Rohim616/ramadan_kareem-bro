@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuiz } from '@/contexts/quiz-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter, Share2 } from 'lucide-react';
+import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter, RefreshCw } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,7 @@ const simpleHash = (str: string) => {
 
 function ReferralSection({ onComplete }: { onComplete: () => void }) {
   const [shares, setShares] = useState(0);
+  const [isChecking, setIsChecking] = useState(false);
   const { toast } = useToast();
 
   const referralCode = useMemo(() => simpleHash(Date.now().toString()), []);
@@ -36,17 +37,33 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
     return '';
   }, [referralCode]);
 
-
   const progress = (shares / REFERRAL_GOAL) * 100;
+  
+  const handleCheckReferrals = () => {
+    setIsChecking(true);
+    toast({
+      title: "Checking for referrals...",
+      description: "This is a simulated check.",
+    });
 
-  const handleShare = () => {
-    if (shares < REFERRAL_GOAL) {
-      const newShares = shares + 1;
+    setTimeout(() => {
+      const newShares = shares < REFERRAL_GOAL ? shares + 1 : shares;
       setShares(newShares);
+      setIsChecking(false);
+
       if (newShares >= REFERRAL_GOAL) {
-        setTimeout(() => onComplete(), 500); // give a slight delay for user to see 100%
+        toast({
+          title: "Congratulations!",
+          description: `You've reached ${REFERRAL_GOAL} referrals and unlocked your reward.`,
+        });
+        setTimeout(() => onComplete(), 500);
+      } else {
+         toast({
+          title: "Update",
+          description: `You now have ${newShares} referral(s). Keep sharing!`,
+        });
       }
-    }
+    }, 1500); // Simulate network delay
   };
 
   const copyToClipboard = () => {
@@ -63,12 +80,10 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
       title: "Copied to clipboard!",
       description: "You can now share your referral link.",
     });
-    handleShare(); // Count copy as a share action
   };
 
   const openShareDialog = (url: string) => {
     window.open(url, '_blank', 'noopener,noreferrer');
-    handleShare();
   };
 
   const WhatsAppIcon = () => (
@@ -82,14 +97,14 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
       <CardHeader className="p-0">
         <CardTitle className="text-xl font-bold">Share to Continue</CardTitle>
         <CardDescription>
-          Share with {REFERRAL_GOAL} friends to unlock your reward.
+          Share with {REFERRAL_GOAL} friends to unlock your reward. Click "Check Progress" to simulate receiving referrals.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 space-y-4">
         <div>
           <Progress value={progress} className="w-full h-3" />
           <p className="text-sm text-muted-foreground mt-2 text-center">
-            {shares} of {REFERRAL_GOAL} shares complete
+            {shares} of {REFERRAL_GOAL} referrals complete
           </p>
         </div>
         <div className="space-y-2">
@@ -112,8 +127,9 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
             <WhatsAppIcon />
             WhatsApp
           </Button>
-          <Button variant="secondary" onClick={handleShare}>
-            <Share2 className="mr-2" /> Other
+          <Button variant="secondary" onClick={handleCheckReferrals} disabled={isChecking}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${isChecking ? 'animate-spin' : ''}`} />
+            {isChecking ? "Checking..." : "Check Progress"}
           </Button>
         </div>
       </CardContent>
