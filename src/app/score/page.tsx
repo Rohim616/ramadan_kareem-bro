@@ -18,7 +18,7 @@ import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { useTranslation } from '@/hooks/use-translation';
 
-const REFERRAL_GOAL = 7;
+const REFERRAL_GOAL = 3;
 const TOTAL_ATTEMPTS = 3;
 
 // A simple hashing function to create a unique-ish ID from a timestamp

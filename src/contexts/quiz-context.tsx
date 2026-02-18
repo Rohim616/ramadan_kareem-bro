@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, ReactNode, useMemo, useEffe
 import { quizQuestions, Question } from '@/lib/quiz-data';
 
 const TOTAL_ATTEMPTS = 3;
-const QUESTIONS_PER_QUIZ = 4;
+const QUESTIONS_PER_QUIZ = 5;
 
 // Helper function to shuffle an array
 const shuffleArray = (array: any[]) => {
