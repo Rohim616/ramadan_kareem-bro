@@ -1,0 +1,13 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // For this demo app, we allow public read/write to the referrals collection.
+    // In a production app, you would want to implement more robust security rules,
+    // potentially using server-side validation to prevent abuse.
+    match /referrals/{referralId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

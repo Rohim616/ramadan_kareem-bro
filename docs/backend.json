@@ -1,0 +1,26 @@
+{
+  "entities": {
+    "referral": {
+      "title": "Referral",
+      "description": "Represents a user's referral status.",
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "number",
+          "description": "The number of successful referrals."
+        }
+      }
+    }
+  },
+  "auth": {
+    "providers": []
+  },
+  "firestore": {
+    "/referrals/{referralId}": {
+      "schema": {
+        "$ref": "#/backend/entities/referral"
+      },
+      "description": "Stores referral counts for each user."
+    }
+  }
+}

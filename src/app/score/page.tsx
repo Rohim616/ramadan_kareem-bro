@@ -5,11 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useQuiz } from '@/contexts/quiz-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter, Users } from 'lucide-react';
+import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { useMemoFirebase } from '@/lib/use-memo-firebase';
 
 const REFERRAL_GOAL = 7;
 
@@ -24,11 +27,12 @@ const simpleHash = (str: string) => {
   return Math.abs(hash).toString(36).substring(0, 8);
 };
 
-function ReferralSection({ onComplete }: { onComplete: () => void }) {
-  const [shares, setShares] = useState(0);
+function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   const { toast } = useToast();
+  // Generate a stable referral code for the component instance
+  const [referralCode] = useState(() => simpleHash(Date.now().toString()));
+  const db = useFirestore();
 
-  const referralCode = useMemo(() => simpleHash(Date.now().toString()), []);
   const referralLink = useMemo(() => {
     if (typeof window !== 'undefined') {
         return `${window.location.origin}/?ref=${referralCode}`;
@@ -36,27 +40,35 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
     return '';
   }, [referralCode]);
 
-  const progress = (shares / REFERRAL_GOAL) * 100;
-  
-  const handleSimulateReferral = () => {
-    if (shares >= REFERRAL_GOAL) return;
+  // Memoize the document reference
+  const referralRef = useMemoFirebase(() => {
+      if (!db || !referralCode) return null;
+      return doc(db, 'referrals', referralCode);
+  }, [db, referralCode]);
 
-    const newShares = shares + 1;
-    setShares(newShares);
-    
-    toast({
-        title: "Referral Simulated!",
-        description: `You now have ${newShares} referral(s).`,
-    });
-
-    if (newShares >= REFERRAL_GOAL) {
-        toast({
-            title: "Goal Reached!",
-            description: "You've unlocked the continue button.",
-        });
-        onComplete();
+  // Create the referral document in Firestore when the component mounts
+  useEffect(() => {
+    if (referralRef) {
+      // Use setDoc with merge to safely create the document and initialize the count.
+      setDoc(referralRef, { count: 0 }, { merge: true });
     }
-  };
+  }, [referralRef]);
+
+  // Listen for real-time updates to the referral document
+  const { data: referralData } = useDoc(referralRef);
+
+  const shares = referralData?.count || 0;
+  const progress = Math.min((shares / REFERRAL_GOAL) * 100, 100);
+
+  useEffect(() => {
+    if (shares >= REFERRAL_GOAL) {
+      toast({
+        title: "Goal Reached!",
+        description: "You've unlocked the continue button.",
+    });
+      onComplete();
+    }
+  }, [shares, onComplete, toast]);
 
   const copyToClipboard = () => {
     if (!navigator.clipboard) {
@@ -83,13 +95,13 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
         <path d="M17.472 14.382c-.297-.149-.88-.436-1.017-.486-.137-.05-.282-.075-.427.05-.145.124-.553.69-.678.832-.126.142-.25.162-.474.05-.224-.112-1.041-.384-1.983-1.22-.734-.658-1.22-1.47-1.365-1.722-.145-.251-.019-.387.099-.512.106-.112.239-.28.358-.425.12-.145.164-.25.24-.418.075-.168.038-.313-.012-.437-.05-.124-.474-1.134-.65-1.55-.174-.415-.35-.357-.474-.357-.112 0-.25.018-.386.018-.137 0-.357.05-.537.248-.18.2-.69.664-.69 1.613 0 .948.707 1.868.81 2.01.102.14.935 1.516 2.262 2.11.314.143.564.227.755.287.348.107.653.092.895-.05.27-.16.88-.36.99-.723.11-.36.11-.67.075-.773-.037-.103-.137-.163-.296-.31zM12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20z"/>
     </svg>
   );
-
+  
   return (
     <div className="w-full space-y-4 pt-6 mt-6 text-left border-t-2 border-dashed border-primary/20">
       <CardHeader className="p-0">
-        <CardTitle className="text-xl font-bold">Referral System (Simulation)</CardTitle>
+        <CardTitle className="text-xl font-bold">Share to Unlock</CardTitle>
         <CardDescription>
-          This is a **simulation** because live database creation is temporarily down. Use the button below to simulate receiving a referral. You need {REFERRAL_GOAL} referrals to continue.
+          Share your link with {REFERRAL_GOAL} friends to unlock the continue button. Your progress will update in real-time.
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 space-y-4">
@@ -99,14 +111,9 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
             {shares} of {REFERRAL_GOAL} referrals complete
           </p>
         </div>
-
-        <Button variant="secondary" onClick={handleSimulateReferral} disabled={shares >= REFERRAL_GOAL} className="w-full">
-            <Users className="mr-2 h-4 w-4" />
-            Simulate a New Referral
-        </Button>
         
         <div className="space-y-2 pt-4">
-            <p className="text-sm font-medium">Your Simulated Referral Link</p>
+            <p className="text-sm font-medium">Your Unique Referral Link</p>
             <div className="flex gap-2">
                 <Input value={referralLink} readOnly className="text-muted-foreground" />
                 <Button variant="outline" size="icon" onClick={copyToClipboard}>
@@ -171,7 +178,7 @@ export default function ScorePage() {
             <Gift className="w-8 h-8 mr-3 text-accent" />
             <p>You've won <span className="text-accent font-bold">{mbReward} MB</span> of data!</p>
           </div>
-          {!referralsComplete && <ReferralSection onComplete={() => setReferralsComplete(true)} />}
+          {!referralsComplete && <RealReferralSection onComplete={() => setReferralsComplete(true)} />}
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row gap-4 pt-6">
           <Button variant="outline" onClick={handleReset} className="w-full">

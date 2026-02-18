@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { QuizProvider } from '@/contexts/quiz-context';
 import { cn } from '@/lib/utils';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -29,12 +30,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn('font-body antialiased', poppins.variable)}>
-        <QuizProvider>
-          <div className="relative min-h-screen w-full bg-gradient-radial-purple">
-            {children}
-          </div>
-          <Toaster />
-        </QuizProvider>
+        <FirebaseClientProvider>
+          <QuizProvider>
+            <div className="relative min-h-screen w-full bg-gradient-radial-purple">
+              {children}
+            </div>
+            <Toaster />
+          </QuizProvider>
+        </FirebaseClientProvider>
       </body>
     </html>
   );
