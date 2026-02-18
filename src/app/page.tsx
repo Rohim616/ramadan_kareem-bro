@@ -53,9 +53,13 @@ function QuizLoading() {
 export default function QuizPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { submitAnswers, score, phoneNumber, isHydrated, language, currentQuestions, attempts, resetQuiz } = useQuiz();
+  const { submitAnswers, score, phoneNumber, isHydrated, language, currentQuestions, attempts } = useQuiz();
   const { t } = useTranslation();
+
   const [answers, setAnswers] = useState<AnswersState>({});
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedOption, setSelectedOption] = useState<string>("");
+
   const db = useFirestore();
   
   useEffect(() => {
@@ -88,20 +92,20 @@ export default function QuizPage() {
     }
   }, [refCode, db]);
 
-  const answeredQuestions = Object.keys(answers).length;
   const totalQuestions = currentQuestions ? currentQuestions.length : 0;
-  const allQuestionsAnswered = totalQuestions > 0 && answeredQuestions === totalQuestions;
-  const progressValue = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+  const progressValue = totalQuestions > 0 ? (currentQuestionIndex / totalQuestions) * 100 : 0;
+  const currentQuestion = currentQuestions?.[currentQuestionIndex];
+  
+  const handleNext = () => {
+    const finalAnswers = { ...answers, [currentQuestion!.id]: selectedOption };
 
-  const handleAnswerChange = (questionId: number, value: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
-    if (allQuestionsAnswered) {
-      submitAnswers(answers);
+    if (currentQuestionIndex < totalQuestions - 1) {
+      setAnswers(finalAnswers);
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      setSelectedOption("");
+    } else {
+      window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
+      submitAnswers(finalAnswers);
       router.push("/score");
     }
   };
@@ -136,9 +140,11 @@ export default function QuizPage() {
   }
 
   // While hydrating or redirecting, show a loading state
-  if (score > 0 || phoneNumber || !currentQuestions || currentQuestions.length === 0) {
+  if (score > 0 || phoneNumber || !currentQuestions || currentQuestions.length === 0 || !currentQuestion) {
     return <QuizLoading />;
   }
+
+  const isLastQuestion = currentQuestionIndex === totalQuestions - 1;
 
   return (
     <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
@@ -157,15 +163,12 @@ export default function QuizPage() {
           </p>
         </header>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500"
-        >
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-500">
           <Card>
             <CardHeader>
               <CardTitle>{t('quiz_progress_title')}</CardTitle>
               <CardDescription>
-                {t('quiz_progress_description', { answered: answeredQuestions, total: totalQuestions })}
+                {t('quiz_progress_description_alt', { current: currentQuestionIndex + 1, total: totalQuestions })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -173,51 +176,48 @@ export default function QuizPage() {
             </CardContent>
           </Card>
 
-          {currentQuestions && currentQuestions.map((q, index) => (
-            <Card key={q.id} className="animate-in fade-in slide-in-from-bottom-10 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
-              <CardHeader>
-                <CardTitle>
-                  {t('quiz_question_title', { id: index + 1 })}
-                </CardTitle>
-                <CardDescription className="text-base text-foreground pt-2">
-                  {q.question[language]}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <RadioGroup
-                  value={answers[q.id]}
-                  onValueChange={(value) => handleAnswerChange(q.id, value)}
-                  className="space-y-3"
-                >
-                  {q.options[language].map((option) => (
-                    <div
-                      key={option}
-                      className="flex items-center space-x-3"
-                    >
-                       <RadioGroupItem value={option} id={`q${q.id}-${option}`} />
-                      <Label htmlFor={`q${q.id}-${option}`} className="text-base font-normal cursor-pointer">
-                        {option}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </CardContent>
-            </Card>
-          ))}
-
-          {allQuestionsAnswered && (
-            <div className="text-center animate-in fade-in duration-700">
-              <Button
-                type="submit"
-                size="lg"
-                className="bg-accent text-accent-foreground hover:bg-accent/90 w-full md:w-auto"
+          <Card key={currentQuestion.id}>
+            <CardHeader>
+              <CardTitle>
+                {t('quiz_question_title', { id: currentQuestionIndex + 1 })}
+              </CardTitle>
+              <CardDescription className="text-base text-foreground pt-2">
+                {currentQuestion.question[language]}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={selectedOption}
+                onValueChange={setSelectedOption}
+                className="space-y-3"
               >
-                {t('quiz_submit_button')}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </div>
-          )}
-        </form>
+                {currentQuestion.options[language].map((option) => (
+                  <div
+                    key={option}
+                    className="flex items-center space-x-3"
+                  >
+                     <RadioGroupItem value={option} id={`q${currentQuestion.id}-${option}`} />
+                    <Label htmlFor={`q${currentQuestion.id}-${option}`} className="text-base font-normal cursor-pointer">
+                      {option}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
+          <div className="text-center animate-in fade-in duration-700">
+            <Button
+              onClick={handleNext}
+              size="lg"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 w-full md:w-auto"
+              disabled={!selectedOption}
+            >
+              {isLastQuestion ? t('quiz_submit_button') : t('quiz_next_button')}
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        </div>
       </div>
     </main>
   );
