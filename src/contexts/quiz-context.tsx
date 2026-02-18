@@ -60,10 +60,18 @@ export function QuizProvider({ children }: { children: ReactNode }) {
 
   const startNewQuiz = useCallback((currentState: QuizState): QuizState => {
     if (currentState.attempts >= TOTAL_ATTEMPTS) {
-      return currentState;
+      return { ...currentState, currentQuestions: [] }; // No more questions if attempts are exhausted
     }
     
-    const availableQuestions = quizQuestions.filter(q => !currentState.usedQuestionIds.includes(q.id));
+    let availableQuestions = quizQuestions.filter(q => !currentState.usedQuestionIds.includes(q.id));
+    let currentUsedIds = currentState.usedQuestionIds;
+
+    // If we don't have enough unique questions for a full quiz, reset the pool.
+    if (availableQuestions.length < QUESTIONS_PER_QUIZ) {
+        availableQuestions = quizQuestions;
+        currentUsedIds = [];
+    }
+
     const newQuestions = shuffleArray(availableQuestions).slice(0, QUESTIONS_PER_QUIZ);
     const newUsedIds = newQuestions.map(q => q.id);
 
@@ -73,7 +81,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
       mbReward: 0,
       answers: {},
       currentQuestions: newQuestions,
-      usedQuestionIds: [...currentState.usedQuestionIds, ...newUsedIds],
+      usedQuestionIds: [...currentUsedIds, ...newUsedIds],
       attempts: currentState.attempts + 1,
     };
   }, []);
@@ -83,8 +91,11 @@ export function QuizProvider({ children }: { children: ReactNode }) {
       const item = window.localStorage.getItem('quizState');
       let loadedState = item ? JSON.parse(item) : initialState;
       
-      // On initial load, if there are no questions, start the first quiz
-      if (loadedState.attempts === 0 && loadedState.currentQuestions.length === 0) {
+      if (loadedState.attempts >= TOTAL_ATTEMPTS) {
+        // If attempts are used up, ensure no questions are shown.
+        loadedState.currentQuestions = [];
+      } else if (!loadedState.currentQuestions || loadedState.currentQuestions.length === 0) {
+        // Otherwise, if questions are missing for a valid attempt state, start a new quiz.
         loadedState = startNewQuiz(loadedState);
       }
 

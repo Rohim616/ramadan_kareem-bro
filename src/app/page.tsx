@@ -26,6 +26,8 @@ type AnswersState = {
   [key: number]: string;
 };
 
+const TOTAL_ATTEMPTS = 3;
+
 function QuizLoading() {
     return (
         <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
@@ -104,7 +106,11 @@ export default function QuizPage() {
     }
   };
 
-  if (!isHydrated || (attempts > 3 && !phoneNumber)) {
+  if (!isHydrated) {
+    return <QuizLoading />;
+  }
+
+  if (attempts >= TOTAL_ATTEMPTS && !phoneNumber && (!currentQuestions || currentQuestions.length === 0)) {
     return (
         <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
             <AlertDialog open={true}>
@@ -130,7 +136,7 @@ export default function QuizPage() {
   }
 
   // While hydrating or redirecting, show a loading state
-  if (!isHydrated || score > 0 || phoneNumber || !currentQuestions || currentQuestions.length === 0) {
+  if (score > 0 || phoneNumber || !currentQuestions || currentQuestions.length === 0) {
     return <QuizLoading />;
   }
 
