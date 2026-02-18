@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { useDoc, useFirestore } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/lib/use-memo-firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const REFERRAL_GOAL = 7;
 
@@ -29,12 +30,16 @@ const simpleHash = (str: string) => {
 
 function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   const { toast } = useToast();
-  // Generate a stable referral code for the component instance
-  const [referralCode] = useState(() => simpleHash(Date.now().toString()));
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const db = useFirestore();
 
+  useEffect(() => {
+    // Generate referral code only on the client to prevent hydration mismatch
+    setReferralCode(simpleHash(Date.now().toString()));
+  }, []);
+
   const referralLink = useMemo(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && referralCode) {
         return `${window.location.origin}/?ref=${referralCode}`;
     }
     return '';
@@ -95,6 +100,33 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
         <path d="M17.472 14.382c-.297-.149-.88-.436-1.017-.486-.137-.05-.282-.075-.427.05-.145.124-.553.69-.678.832-.126.142-.25.162-.474.05-.224-.112-1.041-.384-1.983-1.22-.734-.658-1.22-1.47-1.365-1.722-.145-.251-.019-.387.099-.512.106-.112.239-.28.358-.425.12-.145.164-.25.24-.418.075-.168.038-.313-.012-.437-.05-.124-.474-1.134-.65-1.55-.174-.415-.35-.357-.474-.357-.112 0-.25.018-.386.018-.137 0-.357.05-.537.248-.18.2-.69.664-.69 1.613 0 .948.707 1.868.81 2.01.102.14.935 1.516 2.262 2.11.314.143.564.227.755.287.348.107.653.092.895-.05.27-.16.88-.36.99-.723.11-.36.11-.67.075-.773-.037-.103-.137-.163-.296-.31zM12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20z"/>
     </svg>
   );
+
+  if (!referralCode) {
+    return (
+      <div className="w-full space-y-4 pt-6 mt-6 text-left border-t-2 border-dashed border-primary/20">
+        <CardHeader className="p-0">
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-4 w-full mt-2" />
+        </CardHeader>
+        <CardContent className="p-0 space-y-4">
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-4 w-48 mx-auto" />
+            <div className="space-y-2 pt-4">
+                <Skeleton className="h-4 w-40" />
+                <div className="flex gap-2">
+                    <Skeleton className="h-10 flex-grow" />
+                    <Skeleton className="h-10 w-10" />
+                </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 pt-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        </CardContent>
+      </div>
+    );
+  }
   
   return (
     <div className="w-full space-y-4 pt-6 mt-6 text-left border-t-2 border-dashed border-primary/20">
