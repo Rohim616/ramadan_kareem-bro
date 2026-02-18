@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuiz } from '@/contexts/quiz-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter } from 'lucide-react';
+import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter, Bug } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -293,6 +293,12 @@ export default function ScorePage() {
             <RotateCcw className="mr-2 h-4 w-4" />
             Try Again
           </Button>
+          {process.env.NODE_ENV === 'development' && !referralsComplete && (
+            <Button variant="secondary" onClick={() => setReferralsComplete(true)} className="w-full">
+                <Bug className="mr-2 h-4 w-4" />
+                Dev: Skip Referrals
+            </Button>
+          )}
           {referralsComplete && (
             <Link href="/claim" passHref className="w-full">
               <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
