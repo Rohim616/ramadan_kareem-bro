@@ -16,19 +16,9 @@ export function WarningDialog() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    try {
-      const warningShown = sessionStorage.getItem("warningShown");
-      if (!warningShown) {
-        setIsOpen(true);
-        sessionStorage.setItem("warningShown", "true");
-      }
-    } catch (error) {
-      console.warn("Session storage is not available. The warning may appear on every reload.");
-      // Fallback for environments where sessionStorage is not available
-      if (!isOpen) {
-        setIsOpen(true);
-      }
-    }
+    // By setting this in useEffect, we ensure it only runs on the client.
+    // This will open the dialog on every hard refresh or initial page load.
+    setIsOpen(true);
   }, []);
 
   if (!isOpen) {
