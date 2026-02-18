@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { QuizProvider } from '@/contexts/quiz-context';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { WarningDialog } from '@/components/warning-dialog';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body className={cn('font-body antialiased', poppins.variable)} suppressHydrationWarning>
         <FirebaseClientProvider>
           <QuizProvider>
+            <WarningDialog />
             <div className="relative min-h-screen w-full bg-gradient-radial-purple">
               {children}
             </div>
