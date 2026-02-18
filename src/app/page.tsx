@@ -87,7 +87,7 @@ export default function QuizPage() {
   }, [refCode, db]);
 
   const answeredQuestions = Object.keys(answers).length;
-  const totalQuestions = currentQuestions.length;
+  const totalQuestions = currentQuestions ? currentQuestions.length : 0;
   const allQuestionsAnswered = totalQuestions > 0 && answeredQuestions === totalQuestions;
   const progressValue = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
 
@@ -130,7 +130,7 @@ export default function QuizPage() {
   }
 
   // While hydrating or redirecting, show a loading state
-  if (!isHydrated || score > 0 || phoneNumber || currentQuestions.length === 0) {
+  if (!isHydrated || score > 0 || phoneNumber || !currentQuestions || currentQuestions.length === 0) {
     return <QuizLoading />;
   }
 
@@ -167,7 +167,7 @@ export default function QuizPage() {
             </CardContent>
           </Card>
 
-          {currentQuestions.map((q, index) => (
+          {currentQuestions && currentQuestions.map((q, index) => (
             <Card key={q.id} className="animate-in fade-in slide-in-from-bottom-10 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
               <CardHeader>
                 <CardTitle>
