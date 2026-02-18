@@ -47,7 +47,14 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
     });
 
     setTimeout(() => {
-      const newShares = shares < REFERRAL_GOAL ? shares + 1 : shares;
+      const oldShares = shares;
+      let newShares = shares;
+
+      // Simulate a new referral with a 40% chance
+      if (Math.random() < 0.4 && shares < REFERRAL_GOAL) {
+        newShares++;
+      }
+      
       setShares(newShares);
       setIsChecking(false);
 
@@ -57,10 +64,15 @@ function ReferralSection({ onComplete }: { onComplete: () => void }) {
           description: `You've reached ${REFERRAL_GOAL} referrals and unlocked your reward.`,
         });
         setTimeout(() => onComplete(), 500);
-      } else {
+      } else if (newShares > oldShares) {
          toast({
-          title: "Update",
-          description: `You now have ${newShares} referral(s). Keep sharing!`,
+          title: "New Referral!",
+          description: `Someone used your link! You now have ${newShares} referral(s).`,
+        });
+      } else {
+        toast({
+            title: "No new referrals yet.",
+            description: "Keep sharing your link to get more!",
         });
       }
     }, 1500); // Simulate network delay
