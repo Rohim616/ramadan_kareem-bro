@@ -36,12 +36,12 @@ export function WarningDialog() {
             গুরুত্বপূর্ণ সতর্কবার্তা
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center text-base !mt-4 space-y-3 text-muted-foreground">
-            <p>
+            <span className="block">
               এই অফারটি একজন ব্যবহারকারীর জন্য <strong>শুধুমাত্র একবার</strong> প্রযোজ্য। পুরস্কার Claim করার পর আপনি এই ওয়েবসাইটে নতুন করে কিছু করতে পারবেন না।
-            </p>
-            <p className="font-medium text-foreground">
+            </span>
+            <span className="block font-medium text-foreground">
               সঠিক উত্তর দিয়ে সর্বোচ্চ পুরস্কার জেতার চেষ্টা করুন। প্রয়োজনে অন্যের সাহায্যও নিতে পারেন। শুভকামনা!
-            </p>
+            </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="pt-2">
