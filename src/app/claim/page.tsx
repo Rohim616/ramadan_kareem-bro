@@ -30,6 +30,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { useTranslation } from '@/hooks/use-translation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const OPERATORS = ["Grameenphone", "Robi", "Banglalink", "Teletalk", "Airtel"] as const;
 
@@ -41,9 +42,41 @@ const operatorPrefixes: Record<typeof OPERATORS[number], string[]> = {
   Teletalk: ["015"],
 };
 
+function ClaimLoading() {
+    return (
+        <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
+          <Card className="w-full max-w-md shadow-2xl">
+            <CardHeader className="text-center items-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-5 w-64 mt-2" />
+            </CardHeader>
+            <CardContent className="space-y-4 pt-6">
+                <div className="p-4 bg-secondary rounded-lg">
+                    <Skeleton className="h-8 w-1/2 mx-auto" />
+                </div>
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="space-y-2">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Skeleton className="h-11 w-full" />
+            </CardFooter>
+          </Card>
+        </main>
+      );
+}
+
 export default function ClaimPage() {
   const router = useRouter();
-  const { mbReward, setClaimInfo, score } = useQuiz();
+  const { mbReward, setClaimInfo, score, isHydrated } = useQuiz();
   const { t } = useTranslation();
   const db = useFirestore();
 
@@ -72,11 +105,14 @@ export default function ClaimPage() {
   });
 
   useEffect(() => {
+    if (!isHydrated) {
+        return;
+    }
     // If user lands here without a score, redirect to home
     if (score === 0 && mbReward === 0) {
       router.replace('/');
     }
-  }, [score, mbReward, router]);
+  }, [score, mbReward, router, isHydrated]);
 
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!db) {
@@ -129,6 +165,10 @@ export default function ClaimPage() {
             message: t('claim_error_generic'),
         });
     }
+  }
+
+  if (!isHydrated) {
+    return <ClaimLoading />;
   }
 
   return (

@@ -8,24 +8,66 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { CheckCircle, PartyPopper } from "lucide-react";
 import Link from 'next/link';
 import { useTranslation } from '@/hooks/use-translation';
+import { Skeleton } from '@/components/ui/skeleton';
+
+function ConfirmationLoading() {
+    return (
+        <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
+            <Card className="w-full max-w-md text-center shadow-2xl">
+                <CardHeader className="items-center">
+                    <div className="relative mb-4">
+                        <Skeleton className="h-20 w-20 rounded-full" />
+                    </div>
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-5 w-64 mt-2" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="p-4 bg-secondary rounded-lg space-y-1">
+                        <Skeleton className="h-4 w-20 mx-auto" />
+                        <Skeleton className="h-8 w-32 mx-auto" />
+                    </div>
+                    <div className="p-4 bg-secondary rounded-lg space-y-1">
+                        <Skeleton className="h-4 w-20 mx-auto" />
+                        <Skeleton className="h-6 w-40 mx-auto" />
+                    </div>
+                    <div className="p-4 bg-secondary rounded-lg space-y-1">
+                        <Skeleton className="h-4 w-20 mx-auto" />
+                        <Skeleton className="h-6 w-40 mx-auto" />
+                    </div>
+                    <Skeleton className="h-4 w-5/6 mx-auto" />
+                </CardContent>
+                <CardFooter>
+                    <Skeleton className="h-10 w-full" />
+                </CardFooter>
+            </Card>
+        </main>
+    );
+}
 
 export default function ConfirmationPage() {
     const router = useRouter();
-    const { mbReward, phoneNumber, operator, resetQuiz } = useQuiz();
+    const { mbReward, phoneNumber, operator, resetQuiz, isHydrated } = useQuiz();
     const { t } = useTranslation();
 
     useEffect(() => {
+        if (!isHydrated) {
+            return;
+        }
         // If user lands here without phone number, redirect
         if (!phoneNumber) {
           router.replace('/claim');
         }
-      }, [phoneNumber, router]);
+      }, [phoneNumber, router, isHydrated]);
 
       const handleStartOver = () => {
         window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
         resetQuiz();
         router.push('/');
       }
+
+  if (!isHydrated) {
+    return <ConfirmationLoading />;
+  }
 
   return (
     <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
