@@ -9,11 +9,6 @@ export function useMemoFirebase<T extends Query | DocumentReference | null>(
   factory: () => T,
   deps: any[]
 ) {
-  return useMemo(() => {
-    const obj = factory();
-    if (!obj) return null;
-    // The path property is a stable identifier for a query or doc ref
-    return obj;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(deps)]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(factory, deps);
 }
