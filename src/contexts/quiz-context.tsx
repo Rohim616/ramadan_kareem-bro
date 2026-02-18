@@ -26,24 +26,28 @@ const initialState: QuizState = {
 };
 
 export function QuizProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<QuizState>(() => {
-    if (typeof window === 'undefined') {
-      return initialState;
-    }
-    try {
-      const item = window.localStorage.getItem('quizState');
-      return item ? JSON.parse(item) : initialState;
-    } catch (error) {
-      console.error(error);
-      return initialState;
-    }
-  });
+  const [state, setState] = useState<QuizState>(initialState);
 
+  // Load state from localStorage on the client side to avoid hydration mismatch
   useEffect(() => {
     try {
-      window.localStorage.setItem('quizState', JSON.stringify(state));
+      const item = window.localStorage.getItem('quizState');
+      if (item) {
+        setState(JSON.parse(item));
+      }
     } catch (error) {
-      console.error(error);
+      console.error('Failed to load quiz state from localStorage', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Only run this effect if state is not the initial state
+    if (state !== initialState) {
+        try {
+            window.localStorage.setItem('quizState', JSON.stringify(state));
+        } catch (error) {
+            console.error('Failed to save quiz state to localStorage', error);
+        }
     }
   }, [state]);
 

@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import { LanternIcon, MosqueIcon } from "@/components/icons";
 import { Progress } from "@/components/ui/progress";
 import { ArrowRight } from "lucide-react";
-import { getFirestore, doc, setDoc, increment } from 'firebase/firestore';
-import { initializeFirebase } from "@/firebase";
+import { doc, setDoc, increment } from 'firebase/firestore';
+import { useFirestore } from "@/firebase";
 
 type AnswersState = {
   [key: number]: string;
@@ -29,26 +29,26 @@ export default function QuizPage() {
   const searchParams = useSearchParams();
   const { submitAnswers } = useQuiz();
   const [answers, setAnswers] = useState<AnswersState>({});
+  const db = useFirestore();
 
   const refCode = searchParams.get('ref');
 
   useEffect(() => {
-    if (refCode) {
-        const db = getFirestore(initializeFirebase());
+    if (refCode && db) {
         const referralRef = doc(db, 'referrals', refCode);
         const alreadyReferredKey = `referred_by_${refCode}`;
 
         if (!localStorage.getItem(alreadyReferredKey)) {
             setDoc(referralRef, { count: increment(1) }, { merge: true })
-            .then(() => {
-                localStorage.setItem(alreadyReferredKey, 'true');
-            })
             .catch((error) => {
                 console.error("Error updating referral count: ", error);
             });
+            // To prevent double-counting, we optimistically set the local storage item.
+            // In a production app, you might want more robust logic here.
+            localStorage.setItem(alreadyReferredKey, 'true');
         }
     }
-  }, [refCode]);
+  }, [refCode, db]);
 
   const answeredQuestions = Object.keys(answers).length;
   const totalQuestions = quizQuestions.length;
