@@ -11,7 +11,8 @@ interface QuizState {
 }
 
 interface QuizContextType extends QuizState {
-  submitAnswers: (answers: { [key: number]: string }) => void;
+  isHydrated: boolean;
+  submitAnswers: (answers: { [key:number]: string }) => void;
   setPhoneNumber: (phone: string) => void;
   resetQuiz: () => void;
 }
@@ -27,6 +28,7 @@ const initialState: QuizState = {
 
 export function QuizProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<QuizState>(initialState);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   // Load state from localStorage on the client side to avoid hydration mismatch
   useEffect(() => {
@@ -37,19 +39,21 @@ export function QuizProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       console.error('Failed to load quiz state from localStorage', error);
+    } finally {
+        setIsHydrated(true);
     }
   }, []);
 
   useEffect(() => {
-    // Only run this effect if state is not the initial state
-    if (state !== initialState) {
+    // Only run this effect if state is not the initial state and component is hydrated
+    if (isHydrated) {
         try {
             window.localStorage.setItem('quizState', JSON.stringify(state));
         } catch (error) {
             console.error('Failed to save quiz state to localStorage', error);
         }
     }
-  }, [state]);
+  }, [state, isHydrated]);
 
   const submitAnswers = (answers: { [key: number]: string }) => {
     let correctAnswers = 0;
@@ -84,10 +88,11 @@ export function QuizProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({
     ...state,
+    isHydrated,
     submitAnswers,
     setPhoneNumber,
     resetQuiz,
-  }), [state]);
+  }), [state, isHydrated]);
 
   return <QuizContext.Provider value={value}>{children}</QuizContext.Provider>;
 }

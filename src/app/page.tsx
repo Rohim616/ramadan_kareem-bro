@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuiz } from "@/contexts/quiz-context";
 import { quizQuestions } from "@/lib/quiz-data";
@@ -19,17 +19,56 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowRight } from "lucide-react";
 import { doc, setDoc, increment } from 'firebase/firestore';
 import { useFirestore } from "@/firebase";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type AnswersState = {
   [key: number]: string;
 };
 
+function QuizLoading() {
+    return (
+        <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
+            <div className="w-full max-w-2xl space-y-8">
+                <header className="text-center">
+                    <div className="flex justify-center items-center gap-4 mb-4">
+                        <Skeleton className="w-12 h-12" />
+                        <Skeleton className="w-16 h-16" />
+                        <Skeleton className="w-12 h-12" />
+                    </div>
+                    <Skeleton className="h-10 w-3/4 mx-auto" />
+                    <Skeleton className="h-6 w-1/2 mx-auto mt-2" />
+                </header>
+                 <div className="space-y-6">
+                    <Skeleton className="h-32 w-full" />
+                    <Skeleton className="h-56 w-full" />
+                 </div>
+            </div>
+      </main>
+    )
+}
+
 export default function QuizPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { submitAnswers } = useQuiz();
+  const { submitAnswers, score, phoneNumber, isHydrated } = useQuiz();
   const [answers, setAnswers] = useState<AnswersState>({});
   const db = useFirestore();
+  
+  useEffect(() => {
+    if (!isHydrated) {
+      return; // Wait until the state is loaded from localStorage
+    }
+
+    // If user has a phone number, they've finished everything.
+    if (phoneNumber) {
+      router.replace('/confirmation');
+    } 
+    // If they have a score, they've finished the quiz.
+    else if (score > 0) {
+      router.replace('/score');
+    }
+  }, [isHydrated, score, phoneNumber, router]);
+
 
   const refCode = searchParams.get('ref');
 
@@ -66,6 +105,11 @@ export default function QuizPage() {
       router.push("/score");
     }
   };
+
+  // While hydrating or before redirecting, show a loading state
+  if (!isHydrated || score > 0 || phoneNumber) {
+    return <QuizLoading />;
+  }
 
   return (
     <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
