@@ -11,9 +11,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { useDoc, useFirestore } from '@/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useMemoFirebase } from '@/lib/use-memo-firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 const REFERRAL_GOAL = 7;
 
@@ -53,11 +55,34 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
       return doc(db, 'referrals', referralCode);
   }, [db, referralCode]);
 
-  // Create the referral document in Firestore when the component mounts
+  // Create the referral document in Firestore if it doesn't exist
   useEffect(() => {
     if (referralRef) {
-      // Use setDoc with merge to safely create the document and initialize the count.
-      setDoc(referralRef, { count: 0 }, { merge: true });
+      const createIfNotExists = async () => {
+        try {
+          const docSnap = await getDoc(referralRef);
+          if (!docSnap.exists()) {
+            setDoc(referralRef, { count: 0 }, { merge: true })
+              .catch((serverError) => {
+                const permissionError = new FirestorePermissionError({
+                  path: referralRef.path,
+                  operation: 'create',
+                  requestResourceData: { count: 0 },
+                });
+                errorEmitter.emit('permission-error', permissionError);
+              });
+          }
+        } catch (err: any) {
+          if (err.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+              path: referralRef.path,
+              operation: 'get',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+          }
+        }
+      };
+      createIfNotExists();
     }
   }, [referralRef]);
 
