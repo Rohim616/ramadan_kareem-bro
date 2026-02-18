@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuiz } from "@/contexts/quiz-context";
-import { quizQuestions } from "@/lib/quiz-data";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,10 +15,12 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { LanternIcon, MosqueIcon } from "@/components/icons";
 import { Progress } from "@/components/ui/progress";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BookOpenCheck } from "lucide-react";
 import { doc, setDoc, increment } from 'firebase/firestore';
 import { useFirestore } from "@/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/hooks/use-translation";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 type AnswersState = {
   [key: number]: string;
@@ -50,20 +51,18 @@ function QuizLoading() {
 export default function QuizPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { submitAnswers, score, phoneNumber, isHydrated } = useQuiz();
+  const { submitAnswers, score, phoneNumber, isHydrated, language, currentQuestions, attempts, resetQuiz } = useQuiz();
+  const { t } = useTranslation();
   const [answers, setAnswers] = useState<AnswersState>({});
   const db = useFirestore();
   
   useEffect(() => {
     if (!isHydrated) {
-      return; // Wait until the state is loaded from localStorage
+      return; // Wait until the state is loaded
     }
-
-    // If user has a phone number, they've finished everything.
     if (phoneNumber) {
       router.replace('/confirmation');
     } 
-    // If they have a score, they've finished the quiz.
     else if (score > 0) {
       router.replace('/score');
     }
@@ -82,17 +81,15 @@ export default function QuizPage() {
             .catch((error) => {
                 console.error("Error updating referral count: ", error);
             });
-            // To prevent double-counting, we optimistically set the local storage item.
-            // In a production app, you might want more robust logic here.
             localStorage.setItem(alreadyReferredKey, 'true');
         }
     }
   }, [refCode, db]);
 
   const answeredQuestions = Object.keys(answers).length;
-  const totalQuestions = quizQuestions.length;
-  const allQuestionsAnswered = answeredQuestions === totalQuestions;
-  const progressValue = (answeredQuestions / totalQuestions) * 100;
+  const totalQuestions = currentQuestions.length;
+  const allQuestionsAnswered = totalQuestions > 0 && answeredQuestions === totalQuestions;
+  const progressValue = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
 
   const handleAnswerChange = (questionId: number, value: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -107,8 +104,33 @@ export default function QuizPage() {
     }
   };
 
-  // While hydrating or before redirecting, show a loading state
-  if (!isHydrated || score > 0 || phoneNumber) {
+  if (!isHydrated || (attempts > 3 && !phoneNumber)) {
+    return (
+        <main className="container mx-auto flex min-h-screen items-center justify-center p-4">
+            <AlertDialog open={true}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 mb-4">
+                            <BookOpenCheck className="h-8 w-8 text-destructive" />
+                        </div>
+                        <AlertDialogTitle>{t('max_attempts_title')}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {t('max_attempts_description')}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => window.location.href = 'https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5'}>
+                            OK
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </main>
+    );
+  }
+
+  // While hydrating or redirecting, show a loading state
+  if (!isHydrated || score > 0 || phoneNumber || currentQuestions.length === 0) {
     return <QuizLoading />;
   }
 
@@ -122,10 +144,10 @@ export default function QuizPage() {
             <LanternIcon className="w-12 h-12 text-primary" />
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-primary font-headline">
-            Ramadan Rewards Quiz
+            {t('quiz_page_title')}
           </h1>
           <p className="mt-2 text-lg text-muted-foreground">
-            Test your knowledge and win exciting data rewards!
+            {t('quiz_page_description')}
           </p>
         </header>
 
@@ -135,9 +157,9 @@ export default function QuizPage() {
         >
           <Card>
             <CardHeader>
-              <CardTitle>Quiz Progress</CardTitle>
+              <CardTitle>{t('quiz_progress_title')}</CardTitle>
               <CardDescription>
-                Answered {answeredQuestions} of {totalQuestions} questions
+                {t('quiz_progress_description', { answered: answeredQuestions, total: totalQuestions })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -145,14 +167,14 @@ export default function QuizPage() {
             </CardContent>
           </Card>
 
-          {quizQuestions.map((q, index) => (
+          {currentQuestions.map((q, index) => (
             <Card key={q.id} className="animate-in fade-in slide-in-from-bottom-10 duration-500" style={{ animationDelay: `${index * 100}ms`}}>
               <CardHeader>
                 <CardTitle>
-                  Question {q.id}
+                  {t('quiz_question_title', { id: index + 1 })}
                 </CardTitle>
                 <CardDescription className="text-base text-foreground pt-2">
-                  {q.question}
+                  {q.question[language]}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -161,7 +183,7 @@ export default function QuizPage() {
                   onValueChange={(value) => handleAnswerChange(q.id, value)}
                   className="space-y-3"
                 >
-                  {q.options.map((option) => (
+                  {q.options[language].map((option) => (
                     <div
                       key={option}
                       className="flex items-center space-x-3"
@@ -184,7 +206,7 @@ export default function QuizPage() {
                 size="lg"
                 className="bg-accent text-accent-foreground hover:bg-accent/90 w-full md:w-auto"
               >
-                See Your Score
+                {t('quiz_submit_button')}
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>

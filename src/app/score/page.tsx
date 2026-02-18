@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useQuiz } from '@/contexts/quiz-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter, Bug } from 'lucide-react';
+import { Gift, RotateCcw, ArrowRight, Trophy, Copy, Facebook, Twitter, Bug, AlertCircle } from 'lucide-react';
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -16,8 +16,10 @@ import { useMemoFirebase } from '@/lib/use-memo-firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import { useTranslation } from '@/hooks/use-translation';
 
 const REFERRAL_GOAL = 7;
+const TOTAL_ATTEMPTS = 3;
 
 // A simple hashing function to create a unique-ish ID from a timestamp
 const simpleHash = (str: string) => {
@@ -33,10 +35,10 @@ const simpleHash = (str: string) => {
 function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   const { toast } = useToast();
   const { referralCode, setReferralCode, isHydrated } = useQuiz();
+  const { t } = useTranslation();
   const db = useFirestore();
 
   useEffect(() => {
-    // Generate referral code only after context is hydrated and if code doesn't exist
     if (isHydrated && !referralCode) {
       setReferralCode(simpleHash(Date.now().toString()));
     }
@@ -49,13 +51,11 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
     return '';
   }, [referralCode]);
 
-  // Memoize the document reference
   const referralRef = useMemoFirebase(() => {
       if (!db || !referralCode) return null;
       return doc(db, 'referrals', referralCode);
   }, [db, referralCode]);
 
-  // Create the referral document in Firestore if it doesn't exist
   useEffect(() => {
     if (referralRef) {
       const createIfNotExists = async () => {
@@ -86,7 +86,6 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
     }
   }, [referralRef]);
 
-  // Listen for real-time updates to the referral document
   const { data: referralData } = useDoc(referralRef);
 
   const shares = referralData?.count || 0;
@@ -95,12 +94,12 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   useEffect(() => {
     if (shares >= REFERRAL_GOAL) {
       toast({
-        title: "Goal Reached!",
-        description: "You've unlocked the continue button.",
+        title: t('score_goal_reached_toast_title'),
+        description: t('score_goal_reached_toast_description'),
     });
       onComplete();
     }
-  }, [shares, onComplete, toast]);
+  }, [shares, onComplete, toast, t]);
 
   const copyToClipboard = () => {
     window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
@@ -114,8 +113,8 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
     }
     navigator.clipboard.writeText(referralLink);
     toast({
-      title: "Copied to clipboard!",
-      description: "You can now share your referral link.",
+      title: t('score_copied_toast_title'),
+      description: t('score_copied_toast_description'),
     });
   };
 
@@ -160,21 +159,21 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   return (
     <div className="w-full space-y-4 pt-6 mt-6 text-left border-t-2 border-dashed border-primary/20">
       <CardHeader className="p-0">
-        <CardTitle className="text-xl font-bold">Share to Unlock</CardTitle>
+        <CardTitle className="text-xl font-bold">{t('score_share_title')}</CardTitle>
         <CardDescription>
-          Share your link with {REFERRAL_GOAL} friends to unlock the continue button. Your progress will update in real-time.
+          {t('score_share_description', { goal: REFERRAL_GOAL })}
         </CardDescription>
       </CardHeader>
       <CardContent className="p-0 space-y-4">
         <div>
           <Progress value={progress} className="w-full h-3" />
           <p className="text-sm text-muted-foreground mt-2 text-center">
-            {shares} of {REFERRAL_GOAL} referrals complete
+            {t('score_referral_progress', { shares: shares, goal: REFERRAL_GOAL })}
           </p>
         </div>
         
         <div className="space-y-2 pt-4">
-            <p className="text-sm font-medium">Your Unique Referral Link</p>
+            <p className="text-sm font-medium">{t('score_referral_link_label')}</p>
             <div className="flex gap-2">
                 <Input value={referralLink} readOnly className="text-muted-foreground" />
                 <Button variant="outline" size="icon" onClick={copyToClipboard}>
@@ -201,8 +200,11 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
 
 export default function ScorePage() {
   const router = useRouter();
-  const { score, mbReward, resetQuiz, answers, isHydrated } = useQuiz();
+  const { score, mbReward, resetQuiz, answers, isHydrated, attempts } = useQuiz();
+  const { t } = useTranslation();
   const [referralsComplete, setReferralsComplete] = useState(false);
+
+  const canTryAgain = attempts < TOTAL_ATTEMPTS;
 
   useEffect(() => {
     if (isHydrated && Object.keys(answers).length === 0) {
@@ -211,6 +213,7 @@ export default function ScorePage() {
   }, [answers, isHydrated, router]);
   
   const handleReset = () => {
+    if (!canTryAgain) return;
     window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
     resetQuiz();
     router.push('/');
@@ -274,35 +277,41 @@ export default function ScorePage() {
                 <Trophy className="w-12 h-12 text-accent" />
             </div>
           <CardTitle className="text-3xl font-bold font-headline text-primary">
-            Quiz Result
+            {t('score_page_title')}
           </CardTitle>
           <CardDescription className="text-lg">
-            Here is how you performed!
+            {t('score_page_description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="p-6 bg-secondary rounded-lg">
-            <p className="text-sm font-medium text-muted-foreground">YOUR SCORE</p>
+            <p className="text-sm font-medium text-muted-foreground">{t('score_your_score')}</p>
             <p className="text-6xl font-bold text-primary">{score}%</p>
           </div>
           <div className="flex items-center justify-center text-2xl font-semibold text-foreground">
             <Gift className="w-8 h-8 mr-3 text-accent" />
-            <p>You've won <span className="text-accent font-bold">{mbReward} MB</span> of data!</p>
+            <p>{t('score_reward_won', { mbReward: mbReward })}</p>
           </div>
           {!referralsComplete && <RealReferralSection onComplete={() => setReferralsComplete(true)} />}
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row gap-4 pt-6">
-          <Button variant="outline" onClick={handleReset} className="w-full">
+          <Button variant="outline" onClick={handleReset} className="w-full" disabled={!canTryAgain}>
             <RotateCcw className="mr-2 h-4 w-4" />
-            Try Again
+            {t('score_try_again_button')}
           </Button>
+          {!canTryAgain && (
+             <div className="flex items-center text-sm text-destructive-foreground bg-destructive/90 p-2 rounded-md w-full justify-center">
+                <AlertCircle className="mr-2 h-4 w-4" />
+                <span>{t('score_all_attempts_used')}</span>
+             </div>
+          )}
           {process.env.NODE_ENV === 'development' && !referralsComplete && (
             <Button variant="secondary" onClick={() => {
                 window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
                 setReferralsComplete(true);
             }} className="w-full">
                 <Bug className="mr-2 h-4 w-4" />
-                Dev: Skip Referrals
+                {t('score_dev_skip_button')}
             </Button>
           )}
           {referralsComplete && (
@@ -313,7 +322,7 @@ export default function ScorePage() {
                     window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
                 }}
               >
-                Continue
+                {t('score_continue_button')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>

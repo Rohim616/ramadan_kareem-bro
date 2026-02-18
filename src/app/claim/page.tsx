@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,6 +29,7 @@ import { useFirestore } from '@/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { useTranslation } from '@/hooks/use-translation';
 
 const OPERATORS = ["Grameenphone", "Robi", "Banglalink", "Teletalk", "Airtel"] as const;
 
@@ -40,11 +41,17 @@ const operatorPrefixes: Record<typeof OPERATORS[number], string[]> = {
   Teletalk: ["015"],
 };
 
-const FormSchema = z.object({
+export default function ClaimPage() {
+  const router = useRouter();
+  const { mbReward, setClaimInfo, score } = useQuiz();
+  const { t } = useTranslation();
+  const db = useFirestore();
+
+  const FormSchema = useMemo(() => z.object({
     operator: z.enum(OPERATORS, {
-      required_error: "Please select an operator.",
+      required_error: t('claim_operator_required'),
     }),
-    phone: z.string().regex(/^01[3-9]\d{8}$/, "Please enter a valid 11-digit Bangladeshi phone number."),
+    phone: z.string().regex(/^01[3-9]\d{8}$/, t('claim_phone_invalid')),
   })
   .refine(
     (data) => {
@@ -52,16 +59,10 @@ const FormSchema = z.object({
       return prefixes.some((prefix) => data.phone.startsWith(prefix));
     },
     {
-      message: "Phone number prefix does not match the selected operator.",
+      message: t('claim_phone_operator_mismatch'),
       path: ["phone"],
     }
-  );
-
-
-export default function ClaimPage() {
-  const router = useRouter();
-  const { mbReward, setClaimInfo, score } = useQuiz();
-  const db = useFirestore();
+  ), [t]);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -80,7 +81,7 @@ export default function ClaimPage() {
   async function onSubmit(data: z.infer<typeof FormSchema>) {
     if (!db) {
         form.setError("root.serverError", {
-            message: "Could not connect to the server. Please try again later.",
+            message: t('claim_error_server'),
         });
         return;
     }
@@ -94,15 +95,13 @@ export default function ClaimPage() {
         if (docSnap.exists()) {
             form.setError("phone", {
                 type: "manual",
-                message: "এই নম্বরে ইতিমধ্যে একবার পুরস্কার দাবি করা হয়েছে।",
+                message: t('claim_error_already_claimed'),
             });
         } else {
-            // Optimistically do the user-facing action
             window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
             setClaimInfo(operator, phone);
             router.push("/confirmation");
 
-            // Then, save the number to Firestore in the background
             setDoc(claimedNumberRef, { claimedAt: serverTimestamp() })
                 .catch((serverError) => {
                     console.error("Failed to mark number as claimed:", serverError);
@@ -127,7 +126,7 @@ export default function ClaimPage() {
         console.error("Error checking phone number:", err);
         form.setError("phone", {
             type: "manual",
-            message: "Something went wrong. Please check your connection and try again.",
+            message: t('claim_error_generic'),
         });
     }
   }
@@ -140,10 +139,10 @@ export default function ClaimPage() {
                 <Phone className="h-8 w-8 text-primary" />
             </div>
           <CardTitle className="text-3xl font-bold font-headline text-primary">
-            Claim Your Reward
+            {t('claim_page_title')}
           </CardTitle>
           <CardDescription className="text-lg">
-            Just one more step to get your data!
+            {t('claim_page_description')}
           </CardDescription>
         </CardHeader>
         <Form {...form}>
@@ -151,26 +150,26 @@ export default function ClaimPage() {
             <CardContent className="space-y-4">
                 <div className="flex items-center justify-center text-xl font-semibold text-foreground p-4 bg-secondary rounded-lg">
                     <Gift className="w-7 h-7 mr-3 text-accent" />
-                    <p>Your Reward: <span className="text-accent font-bold">{mbReward} MB</span></p>
+                    <p>{t('claim_reward_label', { mbReward: mbReward })}</p>
                 </div>
                 <FormField
                     control={form.control}
                     name="operator"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Mobile Operator</FormLabel>
+                        <FormLabel>{t('claim_operator_label')}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                             <SelectTrigger>
-                            <SelectValue placeholder="Select your mobile operator" />
+                            <SelectValue placeholder={t('claim_operator_placeholder')} />
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="Grameenphone">Grameenphone</SelectItem>
-                            <SelectItem value="Robi">Robi</SelectItem>
-                            <SelectItem value="Banglalink">Banglalink</SelectItem>
-                            <SelectItem value="Teletalk">Teletalk</SelectItem>
-                            <SelectItem value="Airtel">Airtel</SelectItem>
+                            <SelectItem value="Grameenphone">{t('operators.Grameenphone')}</SelectItem>
+                            <SelectItem value="Robi">{t('operators.Robi')}</SelectItem>
+                            <SelectItem value="Banglalink">{t('operators.Banglalink')}</SelectItem>
+                            <SelectItem value="Teletalk">{t('operators.Teletalk')}</SelectItem>
+                            <SelectItem value="Airtel">{t('operators.Airtel')}</SelectItem>
                         </SelectContent>
                         </Select>
                         <FormMessage />
@@ -182,9 +181,9 @@ export default function ClaimPage() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel>{t('claim_phone_label')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="01xxxxxxxxx" {...field} type="tel" />
+                      <Input placeholder={t('claim_phone_placeholder')} {...field} type="tel" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -193,7 +192,7 @@ export default function ClaimPage() {
             </CardContent>
             <CardFooter>
               <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? "Checking..." : "Get Offer"}
+                {form.formState.isSubmitting ? t('claim_submit_button_submitting') : t('claim_submit_button')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </CardFooter>

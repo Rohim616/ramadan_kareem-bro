@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, PartyPopper } from "lucide-react";
 import Link from 'next/link';
+import { useTranslation } from '@/hooks/use-translation';
 
 export default function ConfirmationPage() {
     const router = useRouter();
     const { mbReward, phoneNumber, operator, resetQuiz } = useQuiz();
+    const { t } = useTranslation();
 
     useEffect(() => {
         // If user lands here without phone number, redirect
@@ -35,34 +37,34 @@ export default function ConfirmationPage() {
                 <PartyPopper className="absolute -bottom-2 -left-2 h-8 w-8 text-primary animate-pulse [animation-delay:200ms]" />
             </div>
           <CardTitle className="text-3xl font-bold font-headline text-primary">
-            Congratulations!
+            {t('confirmation_page_title')}
           </CardTitle>
           <CardDescription className="text-lg">
-            Your reward is on its way.
+            {t('confirmation_page_description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <div className="p-4 bg-secondary rounded-lg space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">REWARD</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('confirmation_reward_label')}</p>
                 <p className="text-2xl font-bold text-primary">{mbReward} MB</p>
             </div>
             {operator && (
               <div className="p-4 bg-secondary rounded-lg space-y-1">
-                  <p className="text-sm font-medium text-muted-foreground">OPERATOR</p>
-                  <p className="text-xl font-bold text-primary">{operator}</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('confirmation_operator_label')}</p>
+                  <p className="text-xl font-bold text-primary">{t(`operators.${operator}` as any)}</p>
               </div>
             )}
             <div className="p-4 bg-secondary rounded-lg space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">PHONE NUMBER</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('confirmation_phone_label')}</p>
                 <p className="text-xl font-bold text-primary">{phoneNumber}</p>
             </div>
           <p className="text-muted-foreground px-4">
-            You will receive your MB reward within the next 3-5 hours. Thank you for participating!
+            {t('confirmation_delivery_notice')}
           </p>
         </CardContent>
         <CardFooter>
           <Button onClick={handleStartOver} variant="outline" className="w-full">
-            Start Over
+            {t('confirmation_start_over_button')}
           </Button>
         </CardFooter>
       </Card>
