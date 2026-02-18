@@ -30,15 +30,15 @@ const simpleHash = (str: string) => {
 
 function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   const { toast } = useToast();
-  const { referralCode, setReferralCode } = useQuiz();
+  const { referralCode, setReferralCode, isHydrated } = useQuiz();
   const db = useFirestore();
 
   useEffect(() => {
-    // Generate referral code only if it doesn't exist and save it to the context
-    if (!referralCode) {
+    // Generate referral code only after context is hydrated and if code doesn't exist
+    if (isHydrated && !referralCode) {
       setReferralCode(simpleHash(Date.now().toString()));
     }
-  }, [referralCode, setReferralCode]);
+  }, [isHydrated, referralCode, setReferralCode]);
 
   const referralLink = useMemo(() => {
     if (typeof window !== 'undefined' && referralCode) {
@@ -103,7 +103,7 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
     </svg>
   );
 
-  if (!referralCode) {
+  if (!isHydrated || !referralCode) {
     return (
       <div className="w-full space-y-4 pt-6 mt-6 text-left border-t-2 border-dashed border-primary/20">
         <CardHeader className="p-0">
