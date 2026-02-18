@@ -9,5 +9,13 @@ service cloud.firestore {
       allow read: if true;
       allow write: if true;
     }
+
+    // Rules for claimed numbers
+    match /claimed_numbers/{phoneNumber} {
+      // Allow a client to check if a phone number has been claimed.
+      allow get: if true;
+      // Allow a client to claim a number only if it hasn't been claimed before.
+      allow create: if true;
+    }
   }
 }

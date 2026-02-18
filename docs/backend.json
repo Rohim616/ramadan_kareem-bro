@@ -10,6 +10,18 @@
           "description": "The number of successful referrals."
         }
       }
+    },
+    "claimedNumber": {
+      "title": "Claimed Phone Number",
+      "description": "Represents a phone number that has already claimed a reward.",
+      "type": "object",
+      "properties": {
+        "claimedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The timestamp when the reward was claimed."
+        }
+      }
     }
   },
   "auth": {
@@ -21,6 +33,12 @@
         "$ref": "#/backend/entities/referral"
       },
       "description": "Stores referral counts for each user."
+    },
+    "/claimed_numbers/{phoneNumber}": {
+      "schema": {
+        "$ref": "#/backend/entities/claimedNumber"
+      },
+      "description": "Stores phone numbers that have already claimed a reward to prevent duplicate claims."
     }
   }
 }

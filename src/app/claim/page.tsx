@@ -25,6 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useFirestore } from '@/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const OPERATORS = ["Grameenphone", "Robi", "Banglalink", "Teletalk", "Airtel"] as const;
 
@@ -57,6 +61,7 @@ const FormSchema = z.object({
 export default function ClaimPage() {
   const router = useRouter();
   const { mbReward, setClaimInfo, score } = useQuiz();
+  const db = useFirestore();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -72,10 +77,59 @@ export default function ClaimPage() {
     }
   }, [score, mbReward, router]);
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
-    window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
-    setClaimInfo(data.operator, data.phone);
-    router.push("/confirmation");
+  async function onSubmit(data: z.infer<typeof FormSchema>) {
+    if (!db) {
+        form.setError("root.serverError", {
+            message: "Could not connect to the server. Please try again later.",
+        });
+        return;
+    }
+
+    const { phone, operator } = data;
+    const claimedNumberRef = doc(db, 'claimed_numbers', phone);
+
+    try {
+        const docSnap = await getDoc(claimedNumberRef);
+
+        if (docSnap.exists()) {
+            form.setError("phone", {
+                type: "manual",
+                message: "এই নম্বরে ইতিমধ্যে একবার পুরস্কার দাবি করা হয়েছে।",
+            });
+        } else {
+            // Optimistically do the user-facing action
+            window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
+            setClaimInfo(operator, phone);
+            router.push("/confirmation");
+
+            // Then, save the number to Firestore in the background
+            setDoc(claimedNumberRef, { claimedAt: serverTimestamp() })
+                .catch((serverError) => {
+                    console.error("Failed to mark number as claimed:", serverError);
+                    if (serverError.code === 'permission-denied') {
+                         const permissionError = new FirestorePermissionError({
+                            path: claimedNumberRef.path,
+                            operation: 'create',
+                            requestResourceData: { claimedAt: 'serverTimestamp' },
+                         });
+                         errorEmitter.emit('permission-error', permissionError);
+                    }
+                });
+        }
+    } catch (err: any) {
+        if (err.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: claimedNumberRef.path,
+                operation: 'get',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+        }
+        console.error("Error checking phone number:", err);
+        form.setError("phone", {
+            type: "manual",
+            message: "Something went wrong. Please check your connection and try again.",
+        });
+    }
   }
 
   return (
@@ -138,8 +192,8 @@ export default function ClaimPage() {
               />
             </CardContent>
             <CardFooter>
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                Get Offer
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Checking..." : "Get Offer"}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </CardFooter>
