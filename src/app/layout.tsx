@@ -6,6 +6,7 @@ import { QuizProvider } from '@/contexts/quiz-context';
 import { cn } from '@/lib/utils';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { WarningDialog } from '@/components/warning-dialog';
+import Script from 'next/script';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -29,8 +30,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-        <script src="https://pl28739627.effectivegatecpm.com/61/f5/b1/61f5b15ec5abd125f85bcc8c2a7889e2.js"></script>
-        <script src="https://pl28739867.effectivegatecpm.com/69/79/88/6979885ba185792b8d19bb95ebb64b3c.js"></script>
       </head>
       <body className={cn('font-body antialiased', poppins.variable)} suppressHydrationWarning>
         <FirebaseClientProvider>
@@ -42,6 +41,8 @@ export default function RootLayout({
             <Toaster />
           </QuizProvider>
         </FirebaseClientProvider>
+        <Script src="https://pl28739627.effectivegatecpm.com/61/f5/b1/61f5b15ec5abd125f85bcc8c2a7889e2.js" strategy="lazyOnload" />
+        <Script src="https://pl28739867.effectivegatecpm.com/69/79/88/6979885ba185792b8d19bb95ebb64b3c.js" strategy="lazyOnload" />
       </body>
     </html>
   );
