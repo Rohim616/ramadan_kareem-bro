@@ -45,7 +45,12 @@ export function WarningDialog() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="pt-2">
-          <AlertDialogAction className="w-full bg-primary hover:bg-primary/90" onClick={() => setIsOpen(false)}>
+          <AlertDialogAction 
+            className="w-full bg-primary hover:bg-primary/90" 
+            onClick={() => {
+              window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
+              setIsOpen(false);
+            }}>
             আমি বুঝেছি
           </AlertDialogAction>
         </AlertDialogFooter>

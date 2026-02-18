@@ -20,6 +20,7 @@ export default function ConfirmationPage() {
       }, [phoneNumber, router]);
 
       const handleStartOver = () => {
+        window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
         resetQuiz();
         router.push('/');
       }

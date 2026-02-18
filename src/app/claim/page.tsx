@@ -73,6 +73,7 @@ export default function ClaimPage() {
   }, [score, mbReward, router]);
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
+    window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
     setClaimInfo(data.operator, data.phone);
     router.push("/confirmation");
   }

@@ -103,6 +103,7 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   }, [shares, onComplete, toast]);
 
   const copyToClipboard = () => {
+    window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
     if (!navigator.clipboard) {
         toast({
             variant: "destructive",
@@ -119,6 +120,7 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   };
 
   const openShareDialog = (url: string) => {
+    window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
@@ -209,6 +211,7 @@ export default function ScorePage() {
   }, [answers, isHydrated, router]);
   
   const handleReset = () => {
+    window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
     resetQuiz();
     router.push('/');
   }
@@ -294,14 +297,22 @@ export default function ScorePage() {
             Try Again
           </Button>
           {process.env.NODE_ENV === 'development' && !referralsComplete && (
-            <Button variant="secondary" onClick={() => setReferralsComplete(true)} className="w-full">
+            <Button variant="secondary" onClick={() => {
+                window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
+                setReferralsComplete(true);
+            }} className="w-full">
                 <Bug className="mr-2 h-4 w-4" />
                 Dev: Skip Referrals
             </Button>
           )}
           {referralsComplete && (
             <Link href="/claim" passHref className="w-full">
-              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+              <Button 
+                className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                onClick={() => {
+                    window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
+                }}
+              >
                 Continue
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
