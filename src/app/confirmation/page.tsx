@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 export default function ConfirmationPage() {
     const router = useRouter();
-    const { mbReward, phoneNumber, resetQuiz } = useQuiz();
+    const { mbReward, phoneNumber, operator, resetQuiz } = useQuiz();
 
     useEffect(() => {
         // If user lands here without phone number, redirect
@@ -45,9 +45,15 @@ export default function ConfirmationPage() {
                 <p className="text-sm font-medium text-muted-foreground">REWARD</p>
                 <p className="text-2xl font-bold text-primary">{mbReward} MB</p>
             </div>
+            {operator && (
+              <div className="p-4 bg-secondary rounded-lg space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">OPERATOR</p>
+                  <p className="text-xl font-bold text-primary">{operator}</p>
+              </div>
+            )}
             <div className="p-4 bg-secondary rounded-lg space-y-1">
                 <p className="text-sm font-medium text-muted-foreground">PHONE NUMBER</p>
-                <p className="text-2xl font-bold text-primary">{phoneNumber}</p>
+                <p className="text-xl font-bold text-primary">{phoneNumber}</p>
             </div>
           <p className="text-muted-foreground px-4">
             You will receive your MB reward within the next 3-5 hours. Thank you for participating!

@@ -8,13 +8,14 @@ interface QuizState {
   score: number;
   mbReward: number;
   phoneNumber: string | null;
+  operator: string | null;
   referralCode: string | null;
 }
 
 interface QuizContextType extends QuizState {
   isHydrated: boolean;
   submitAnswers: (answers: { [key:number]: string }) => void;
-  setPhoneNumber: (phone: string) => void;
+  setClaimInfo: (operator: string, phone: string) => void;
   setReferralCode: (code: string) => void;
   resetQuiz: () => void;
 }
@@ -26,6 +27,7 @@ const initialState: QuizState = {
   score: 0,
   mbReward: 0,
   phoneNumber: null,
+  operator: null,
   referralCode: null,
 };
 
@@ -76,8 +78,8 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const setPhoneNumber = (phone: string) => {
-    setState(prev => ({ ...prev, phoneNumber: phone }));
+  const setClaimInfo = (operator: string, phone: string) => {
+    setState(prev => ({ ...prev, operator, phoneNumber: phone }));
   };
 
   const setReferralCode = (code: string) => {
@@ -103,7 +105,7 @@ export function QuizProvider({ children }: { children: ReactNode }) {
     ...state,
     isHydrated,
     submitAnswers,
-    setPhoneNumber,
+    setClaimInfo,
     setReferralCode,
     resetQuiz,
   }), [state, isHydrated]);

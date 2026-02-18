@@ -18,14 +18,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Gift, Phone } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const FormSchema = z.object({
-  phone: z.string().min(10, "Please enter a valid phone number.").max(15, "Please enter a valid phone number."),
+  operator: z.string({
+    required_error: "Please select an operator.",
+  }),
+  phone: z.string().regex(/^01[3-9]\d{8}$/, "Please enter a valid 11-digit Bangladeshi phone number."),
 });
 
 export default function ClaimPage() {
   const router = useRouter();
-  const { mbReward, setPhoneNumber, score } = useQuiz();
+  const { mbReward, setClaimInfo, score } = useQuiz();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -42,7 +52,7 @@ export default function ClaimPage() {
   }, [score, mbReward, router]);
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
-    setPhoneNumber(data.phone);
+    setClaimInfo(data.operator, data.phone);
     router.push("/confirmation");
   }
 
@@ -62,11 +72,35 @@ export default function ClaimPage() {
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4">
                 <div className="flex items-center justify-center text-xl font-semibold text-foreground p-4 bg-secondary rounded-lg">
                     <Gift className="w-7 h-7 mr-3 text-accent" />
                     <p>Your Reward: <span className="text-accent font-bold">{mbReward} MB</span></p>
                 </div>
+                <FormField
+                    control={form.control}
+                    name="operator"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Mobile Operator</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                            <SelectValue placeholder="Select your mobile operator" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="Grameenphone">Grameenphone</SelectItem>
+                            <SelectItem value="Robi">Robi</SelectItem>
+                            <SelectItem value="Banglalink">Banglalink</SelectItem>
+                            <SelectItem value="Teletalk">Teletalk</SelectItem>
+                            <SelectItem value="Airtel">Airtel</SelectItem>
+                        </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
               <FormField
                 control={form.control}
                 name="phone"
@@ -74,7 +108,7 @@ export default function ClaimPage() {
                   <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter your phone number" {...field} type="tel" />
+                      <Input placeholder="01xxxxxxxxx" {...field} type="tel" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
