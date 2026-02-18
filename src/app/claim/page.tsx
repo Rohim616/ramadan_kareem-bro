@@ -26,12 +26,33 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+const OPERATORS = ["Grameenphone", "Robi", "Banglalink", "Teletalk", "Airtel"] as const;
+
+const operatorPrefixes: Record<typeof OPERATORS[number], string[]> = {
+  Grameenphone: ["013", "017"],
+  Robi: ["018"],
+  Airtel: ["016"],
+  Banglalink: ["014", "019"],
+  Teletalk: ["015"],
+};
+
 const FormSchema = z.object({
-  operator: z.string({
-    required_error: "Please select an operator.",
-  }),
-  phone: z.string().regex(/^01[3-9]\d{8}$/, "Please enter a valid 11-digit Bangladeshi phone number."),
-});
+    operator: z.enum(OPERATORS, {
+      required_error: "Please select an operator.",
+    }),
+    phone: z.string().regex(/^01[3-9]\d{8}$/, "Please enter a valid 11-digit Bangladeshi phone number."),
+  })
+  .refine(
+    (data) => {
+      const prefixes = operatorPrefixes[data.operator];
+      return prefixes.some((prefix) => data.phone.startsWith(prefix));
+    },
+    {
+      message: "Phone number prefix does not match the selected operator.",
+      path: ["phone"],
+    }
+  );
+
 
 export default function ClaimPage() {
   const router = useRouter();
