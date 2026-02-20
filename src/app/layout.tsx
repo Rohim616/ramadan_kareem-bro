@@ -8,6 +8,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { WarningDialog } from '@/components/warning-dialog';
 import Script from 'next/script';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+import { NavMenu } from '@/components/NavMenu';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -37,8 +38,9 @@ export default function RootLayout({
           <QuizProvider>
             <WarningDialog />
             <div className="relative min-h-screen w-full bg-gradient-radial-purple">
-              <header className="absolute top-0 right-0 p-4 z-10">
+              <header className="absolute top-0 right-0 p-4 z-10 flex items-center gap-2">
                 <LanguageSwitcher />
+                <NavMenu />
               </header>
               {children}
             </div>

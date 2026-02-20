@@ -55,6 +55,9 @@
   "confirmation_start_over_button": "আবার শুরু করুন",
   "max_attempts_title": "আর কোনো সুযোগ নেই",
   "max_attempts_description": "আপনি আপনার ৩টি সুযোগই ব্যবহার করে ফেলেছেন। অংশগ্রহণের জন্য ধন্যবাদ!",
+  "nav_about": "আমাদের সম্পর্কে",
+  "nav_contact": "যোগাযোগ",
+  "nav_privacy_policy": "গোপনীয়তা নীতি",
   "operators": {
     "Grameenphone": "গ্রামীণফোন",
     "Robi": "রবি",

@@ -55,6 +55,9 @@
   "confirmation_start_over_button": "Start Over",
   "max_attempts_title": "No More Attempts",
   "max_attempts_description": "You have used all your 3 attempts. Thank you for participating!",
+  "nav_about": "About Us",
+  "nav_contact": "Contact Us",
+  "nav_privacy_policy": "Privacy Policy",
   "operators": {
     "Grameenphone": "Grameenphone",
     "Robi": "Robi",
