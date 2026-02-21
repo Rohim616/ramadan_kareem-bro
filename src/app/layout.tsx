@@ -29,7 +29,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
        <head>
-        <meta name="pushsdk" content="f4e552425265a9e5267fd125510c6ec3" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -48,22 +47,6 @@ export default function RootLayout({
             <Toaster />
           </QuizProvider>
         </FirebaseClientProvider>
-        <Script id="propush-me-smart-tag" strategy="lazyOnload">
-          {`
-            var s = document.createElement('script');
-            s.src = "//gmanq.com/ebf/a6905/mw.min.js?z=10634945&sw=/sw-check-permissions-1b1b6.js";
-            s.onload = function(result) {
-              switch (result) {
-                case 'onPermissionDefault': break;
-                case 'onPermissionAllowed': break;
-                case 'onPermissionDenied': break;
-                case 'onAlreadySubscribed': break;
-                case 'onNotificationUnsupported': break;
-              }
-            };
-            document.head.appendChild(s);
-          `}
-        </Script>
         <Script id="onclick-ad" strategy="lazyOnload">
             {`
               (function () {
