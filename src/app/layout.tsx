@@ -64,6 +64,24 @@ export default function RootLayout({
             document.head.appendChild(s);
           `}
         </Script>
+        <Script id="onclick-ad" strategy="lazyOnload">
+            {`
+              (function () {
+                  var clickUrl = "https://rm358.com/4/10634969?var={your_source_id}";
+
+                  function clickTbEventInit() {
+                      document.addEventListener('click', function () {
+                          window.onbeforeunload = null;
+                          window.open(clickUrl, '_blank', 'noreferrer,noopener');
+                      });
+                  }
+
+                  setTimeout(function () {
+                      clickTbEventInit();
+                  }, 5000);
+              })();
+            `}
+        </Script>
       </body>
     </html>
   );
