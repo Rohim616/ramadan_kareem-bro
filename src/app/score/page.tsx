@@ -102,7 +102,6 @@ function RealReferralSection({ onComplete }: { onComplete: () => void }) {
   }, [shares, onComplete, toast, t]);
 
   const copyToClipboard = () => {
-    window.open('https://www.effectivegatecpm.com/ep89i0w7zc?key=8b019eeffed8ea22d62809411f761fb5', '_blank');
     if (!navigator.clipboard) {
         toast({
             variant: "destructive",
