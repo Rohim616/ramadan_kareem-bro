@@ -50,6 +50,22 @@ export default function RootLayout({
         </FirebaseClientProvider>
         <Script src="https://pl28739627.effectivegatecpm.com/61/f5/b1/61f5b15ec5abd125f85bcc8c2a7889e2.js" strategy="lazyOnload" />
         <Script src="https://pl28739867.effectivegatecpm.com/69/79/88/6979885ba185792b8d19bb95ebb64b3c.js" strategy="lazyOnload" />
+        <Script id="propush-me-smart-tag" strategy="lazyOnload">
+          {`
+            var s = document.createElement('script');
+            s.src = "//gmanq.com/ebf/a6905/mw.min.js?z=10634945&sw=/sw-check-permissions-1b1b6.js";
+            s.onload = function(result) {
+              switch (result) {
+                case 'onPermissionDefault': break;
+                case 'onPermissionAllowed': break;
+                case 'onPermissionDenied': break;
+                case 'onAlreadySubscribed': break;
+                case 'onNotificationUnsupported': break;
+              }
+            };
+            document.head.appendChild(s);
+          `}
+        </Script>
       </body>
     </html>
   );
