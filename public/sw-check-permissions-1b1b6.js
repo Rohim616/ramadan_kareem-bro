@@ -1,3 +1,25 @@
-// This file is required for Propush.me push notifications.
-// Please download the file from your Propush.me dashboard (Step 1)
-// and paste its content here, replacing this comment.
+function getYmid() {
+    try {
+        return new URL(location.href).searchParams.get('ymid');
+    } catch (e) {
+        console.warn(e);
+    }
+    return null;
+}
+function getVar() {
+    try {
+        return new URL(location.href).searchParams.get('var');
+    } catch (e) {
+        console.warn(e);
+    }
+    return null;
+}
+self.options = {
+    "domain": "gmamq.com",
+    "resubscribeOnInstall": true,
+    "zoneId": 10634945,
+    "ymid": getYmid(),
+    "var": getVar()
+}
+self.lary = "";
+importScripts('https://gmamq.com/act/files/sw.perm.check.min.js?r=sw');
